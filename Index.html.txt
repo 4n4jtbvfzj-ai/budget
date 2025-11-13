@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Local Jars Budget</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#00695c">
+
+    <style>
+        /* --- CSS Variables for Theming --- */
+        :root {
+            --bg-primary: #f4f7f6;
+            --bg-secondary: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #555;
+            --accent: #00695c;
+            --accent-light: #e0f2f1;
+            --accent-dark: #004d40;
+            --danger: #d32f2f;
+            --danger-light: #ffebee;
+            --border: #ddd;
+            --shadow: 0 2px 5px rgba(0,0,0,0.1);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --accent: #4db6ac;
+            --accent-light: #00695c;
+            --accent-dark: #00796b;
+            --danger: #ef5350;
+            --danger-light: #c62828;
+            --border: #404040;
+            --shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        /* --- Basic Setup --- */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            transition: var(--transition);
+        }
+
+        main {
+            padding: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--accent);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .theme-toggle, .export-btn, .import-btn, .lock-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover, .export-btn:hover, .import-btn:hover, .lock-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .input-file {
+            display: none;
+        }
+
+        /* --- To Be Budgeted Sidebar --- */
+        #to-be-budgeted {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            height: fit-content;
+            position: sticky;
+            top: 80px;
+        }
+
+        #to-be-budgeted h2 {
+            margin: 0 0 10px 0;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        #tbb-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        #tbb-amount.negative {
+            color: var(--danger);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-light);
+            color: var(--accent);
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-light);
+            color: var(--danger);
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* --- Envelopes Main Area --- */
+        .section-header {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 5px;
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-bar {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        #envelopes-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .envelope-card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 15px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            cursor: grab;
+        }
+
+        .envelope-card:active {
+            cursor: grabbing;
+        }
+
+        .envelope-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .envelope-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: var(--accent-dark);
+        }
+
+        .envelope-balance {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .envelope-balance.negative {
+            color: var(--danger);
+        }
+
+        .envelope-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .envelope-meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* --- Add Envelope Form --- */
+        #add-envelope-form {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #add-envelope-form input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        #add-envelope-form button {
+            flex-shrink: 0;
+        }
+
+        /* --- Reports Section --- */
+        #reports-section {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        #reports-section h3 {
+            margin-top: 0;
+        }
+
+        .report-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* --- Scheduled Transactions --- */
+        #scheduled-section {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .scheduled-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        #add-scheduled-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        #add-scheduled-form input, #add-scheduled-form select {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* --- Modals --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            margin: 10%;
+            padding: 30px;
+            border-radius: var(--radius);
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            animation: modalSlideIn 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: var(--accent-dark);
+        }
+
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .modal textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .modal label {
+            display: block;
+            margin: 10px 0 5px 0;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        /* --- PIN Lock --- */
+        #pin-lock {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-primary);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #pin-lock.active {
+            display: flex;
+        }
+
+        #pin-modal {
+            background-color: var(--bg-secondary);
+            padding: 30px;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        #pin-modal input {
+            width: 100px;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        /* --- History Modal --- */
+        #history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .transaction {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .transaction:last-child {
+            border-bottom: none;
+        }
+
+        .transaction.amount {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .transaction.amount.negative {
+            color: var(--danger);
+        }
+
+        /* --- Accessibility --- */
+        button:focus, input:focus, select:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Drag and Drop */
+        .drag-over {
+            border: 2px dashed var(--accent);
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div id="pin-lock">
+        <div id="pin-modal">
+            <h2>Enter PIN to Unlock</h2>
+            <input type="password" id="pin-input" maxlength="4" placeholder="____">
+            <div class="modal-actions">
+                <button id="pin-submit" class="btn-primary">Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <h1>Local Jars Budget</h1>
+        <div class="header-actions">
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+            <button class="export-btn" id="export-btn" aria-label="Export data">📤</button>
+            <label for="import-file" class="import-btn" aria-label="Import data">📥</label>
+            <input type="file" id="import-file" class="input-file" accept=".json">
+            <button class="lock-btn" id="lock-btn" aria-label="Lock app">🔒</button>
+        </div>
+    </header>
+
+    <main>
+        <section id="main-content">
+            <div class="section-header">
+                <h3>Your Jars</h3>
+                <button id="quick-fund-btn" class="btn-primary">Quick-Fund Goals</button>
+            </div>
+
+            <input type="text" id="search-input" class="search-bar" placeholder="Search jars..." aria-label="Search envelopes">
+
+            <div id="envelopes-list"></div>
+
+            <div class="section-header">
+                <h3>Add a New Jar</h3>
+            </div>
+            <form id="add-envelope-form">
+                <input type="text" id="new-envelope-name" placeholder="e.g., Groceries, Rent..." required aria-label="New envelope name">
+                <button type="submit" class="btn-primary">Add Jar</button>
+            </form>
+
+            <div id="scheduled-section">
+                <h3>Scheduled Transactions</h3>
+                <div id="scheduled-list"></div>
+                <form id="add-scheduled-form">
+                    <input type="text" id="scheduled-name" placeholder="Bill name" required aria-label="Scheduled transaction name">
+                    <input type="number" id="scheduled-amount" step="0.01" min="0" placeholder="Amount" aria-label="Amount">
+                    <select id="scheduled-envelope" aria-label="Envelope">
+                        <option value="">Select Jar</option>
+                    </select>
+                    <input type="date" id="scheduled-date" aria-label="Date">
+                    <button type="submit" class="btn-primary">Add Scheduled</button>
+                </form>
+            </div>
+
+            <div id="reports-section">
+                <h3>Spending Report</h3>
+                <div id="report-content"></div>
+            </div>
+        </section>
+
+        <aside id="to-be-budgeted">
+            <h2>To Be Budgeted</h2>
+            <div id="tbb-amount">$0.00</div>
+            <button id="add-income-btn" class="btn-primary">Add Income</button>
+            <button id="transfer-btn" class="btn-secondary" style="margin-top: 10px;">Transfer Between Jars</button>
+        </aside>
+    </main>
+
+    <!-- Modals -->
+    <div id="amount-modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <h3 id="modal-title">Enter Amount</h3>
+            <p id="modal-description" class="sr-only">Description for screen readers</p>
+            <input type="number" id="modal-amount" step="0.01" min="0" placeholder="0.00" aria-label="Amount">
+            <label for="modal-note">Note (optional):</label>
+            <textarea id="modal-note" placeholder="Add a note..."></textarea>
+            <div class="modal-actions">
+                <button id="modal-cancel" class="btn-secondary">Cancel</button>
+                <button id="modal-confirm" class="btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="transfer-modal" class="modal" role="dialog" aria-labelledby="transfer-title" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <h3 id="transfer-title">Transfer Funds</h3>
+            <label for="transfer-from">From:</label>
+            <select id="transfer-from" aria-label="From jar"></select>
+            <label for="transfer-to">To:</label>
+            <select id="transfer-to" aria-label="To jar"></select>
+            <label for="transfer-amount">Amount:</label>
+            <input type="number" id="transfer-amount" step="0.01" min="0" placeholder="0.00" aria-label="Transfer amount">
+            <label for="transfer-note">Note (optional):</label>
+            <textarea id="transfer-note" placeholder="Add a note..."></textarea>
+            <div class="modal-actions">
+                <button id="transfer-cancel" class="btn-secondary">Cancel</button>
+                <button id="transfer-confirm" class="btn-primary">Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="modal" role="dialog" aria-labelledby="confirm-title" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <h3 id="confirm-title">Confirm Action</h3>
+            <p id="confirm-description"></p>
+            <div class="modal-actions">
+                <button id="confirm-cancel" class="btn-secondary">Cancel</button>
+                <button id="confirm-yes" class="btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal" role="dialog" aria-labelledby="history-title" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <h3 id="history-title">Transaction History</h3>
+            <div id="history-list"></div>
+            <div class="modal-actions">
+                <button id="history-close" class="btn-primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal" role="dialog" aria-labelledby="edit-title" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <h3 id="edit-title">Edit Jar</h3>
+            <label for="edit-name">Jar Name:</label>
+            <input type="text" id="edit-name" placeholder="Jar name" aria-label="Jar name">
+            <label for="edit-goal">Goal Amount:</label>
+            <input type="number" id="edit-goal" step="0.01" min="0" placeholder="0.00" aria-label="Goal amount">
+            <div class="modal-actions">
+                <button id="edit-cancel" class="btn-secondary">Cancel</button>
+                <button id="edit-save" class="btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+
+        // Elements
+        const tbbAmountEl = document.getElementById('tbb-amount');
+        const addIncomeBtn = document.getElementById('add-income-btn');
+        const transferBtn = document.getElementById('transfer-btn');
+        const envelopesListEl = document.getElementById('envelopes-list');
+        const addEnvelopeForm = document.getElementById('add-envelope-form');
+        const newEnvelopeNameEl = document.getElementById('new-envelope-name');
+        const searchInput = document.getElementById('search-input');
+        const themeToggle = document.getElementById('theme-toggle');
+        const exportBtn = document.getElementById('export-btn');
+        const importFile = document.getElementById('import-file');
+        const lockBtn = document.getElementById('lock-btn');
+        const quickFundBtn = document.getElementById('quick-fund-btn');
+        const scheduledList = document.getElementById('scheduled-list');
+        const addScheduledForm = document.getElementById('add-scheduled-form');
+        const scheduledName = document.getElementById('scheduled-name');
+        const scheduledAmount = document.getElementById('scheduled-amount');
+        const scheduledEnvelope = document.getElementById('scheduled-envelope');
+        const scheduledDate = document.getElementById('scheduled-date');
+        const reportContent = document.getElementById('report-content');
+
+        // Modals
+        const amountModal = document.getElementById('amount-modal');
+        const transferModal = document.getElementById('transfer-modal');
+        const confirmModal = document.getElementById('confirm-modal');
+        const historyModal = document.getElementById('history-modal');
+        const editModal = document.getElementById('edit-modal');
+        const pinLock = document.getElementById('pin-lock');
+        const pinInput = document.getElementById('pin-input');
+        const pinSubmit = document.getElementById('pin-submit');
+
+        const modalTitle = document.getElementById('modal-title');
+        const modalDescription = document.getElementById('modal-description');
+        const modalAmount = document.getElementById('modal-amount');
+        const modalNote = document.getElementById('modal-note');
+        const modalConfirm = document.getElementById('modal-confirm');
+        const modalCancel = document.getElementById('modal-cancel');
+        const transferFrom = document.getElementById('transfer-from');
+        const transferTo = document.getElementById('transfer-to');
+        const transferAmount = document.getElementById('transfer-amount');
+        const transferNote = document.getElementById('transfer-note');
+        const transferConfirm = document.getElementById('transfer-confirm');
+        const transferCancel = document.getElementById('transfer-cancel');
+        const confirmTitle = document.getElementById('confirm-title');
+        const confirmDescription = document.getElementById('confirm-description');
+        const confirmYes = document.getElementById('confirm-yes');
+        const confirmCancel = document.getElementById('confirm-cancel');
+        const historyList = document.getElementById('history-list');
+        const historyClose = document.getElementById('history-close');
+        const editName = document.getElementById('edit-name');
+        const editGoal = document.getElementById('edit-goal');
+        const editSave = document.getElementById('edit-save');
+        const editCancel = document.getElementById('edit-cancel');
+
+        // Data Structure
+        let appData = {
+            toBeBudgeted: 0,
+            envelopes: [], // { id, name, balance, goal: 0, transactions: [{type: 'add'|'spend'|'transfer', amount, date, note, fromName}] }
+            scheduled: [], // { id, name, amount, envelopeId, date, applied: false }
+            pin: null, // 4-digit PIN
+            locked: false
+        };
+
+        let currentAction = null;
+        let dragTarget = null;
+
+        // --- CORE FUNCTIONS ---
+
+        function saveData() {
+            localStorage.setItem('localJarsData', JSON.stringify(appData));
+        }
+
+        function loadData() {
+            const data = localStorage.getItem('localJarsData');
+            if (data) {
+                appData = JSON.parse(data);
+                // Migrate legacy data
+                appData.envelopes = appData.envelopes || [];
+                appData.scheduled = appData.scheduled || [];
+                appData.envelopes.forEach(envelope => {
+                    if (envelope.goal === undefined) envelope.goal = 0;
+                    if (!envelope.transactions) envelope.transactions = [];
+                });
+                appData.scheduled.forEach(s => {
+                    if (s.applied === undefined) s.applied = false;
+                });
+            }
+            if (appData.pin && appData.locked) {
+                showPinLock();
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(appData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'local-jars-backup.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (confirm('This will overwrite your current data. Continue?')) {
+                        appData = importedData;
+                        loadData(); // To migrate if needed
+                        saveData();
+                        render();
+                        renderScheduled();
+                        renderReport();
+                        updateSelects();
+                    }
+                } catch (err) {
+                    alert('Invalid file format.');
+                }
+            };
+            reader.readAsText(file);
+            importFile.value = '';
+        }
+
+        function setPin(pin) {
+            if (pin.length !== 4 || isNaN(pin)) {
+                alert('PIN must be 4 digits.');
+                return false;
+            }
+            appData.pin = pin;
+            appData.locked = true;
+            saveData();
+            showPinLock();
+            return true;
+        }
+
+        function checkPin(input) {
+            if (input === appData.pin) {
+                pinLock.classList.remove('active');
+                document.body.style.overflow = '';
+                appData.locked = false;
+                saveData();
+            } else {
+                alert('Invalid PIN.');
+                pinInput.value = '';
+                pinInput.focus();
+            }
+        }
+
+        function showPinLock() {
+            if (!appData.pin) {
+                const pin = prompt('Set a 4-digit PIN to lock the app:');
+                if (pin && setPin(pin)) return;
+            }
+            pinLock.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            pinInput.value = '';
+            pinInput.focus();
+        }
+
+        function render(filteredEnvelopes = appData.envelopes) {
+            tbbAmountEl.textContent = formatCurrency(appData.toBeBudgeted);
+            tbbAmountEl.classList.toggle('negative', appData.toBeBudgeted < 0);
+
+            envelopesListEl.innerHTML = '';
+
+            filteredEnvelopes.forEach((envelope, index) => {
+                const card = createEnvelopeCard(envelope, index);
+                envelopesListEl.appendChild(card);
+            });
+
+            updateSelects();
+        }
+
+        function createEnvelopeCard(envelope, index) {
+            const card = document.createElement('div');
+            card.className = 'envelope-card';
+            card.dataset.id = envelope.id;
+            card.draggable = true;
+            card.setAttribute('role', 'article');
+            card.setAttribute('aria-label', `${envelope.name}: ${formatCurrency(envelope.balance)}`);
+
+            const balanceClass = envelope.balance < 0 ? 'negative' : '';
+            const progress = envelope.goal > 0 ? (envelope.balance / envelope.goal * 100) : 0;
+            const progressBar = envelope.goal > 0 ? `
+                <div class="envelope-meta">Goal: ${formatCurrency(envelope.goal)} (${Math.min(progress, 100).toFixed(0)}%)</div>
+                <div style="height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 10px;">
+                    <div style="height: 100%; background: var(--accent); width: ${Math.min(progress, 100)}%; transition: var(--transition);"></div>
+                </div>
+            ` : '';
+
+            card.innerHTML = `
+                <h4>${envelope.name}</h4>
+                <div class="envelope-balance ${balanceClass}">${formatCurrency(envelope.balance)}</div>
+                ${progressBar}
+                <div class="envelope-actions">
+                    <button class="btn-secondary add-funds-btn" aria-label="Add funds to ${envelope.name}">+ Add</button>
+                    <button class="btn-secondary log-spend-btn" aria-label="Log spend from ${envelope.name}">- Spend</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+                    <button class="btn-secondary transfer-btn" style="flex: 1;" aria-label="Transfer from ${envelope.name}">Transfer</button>
+                    <button class="btn-secondary edit-btn" style="flex: 1;" aria-label="Edit ${envelope.name}">Edit</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 10px;">
+                    <button class="btn-secondary history-btn" style="flex: 1;" aria-label="View history for ${envelope.name}">History</button>
+                    <button class="btn-secondary goal-btn" style="flex: 1;" aria-label="Set goal for ${envelope.name}">Goal</button>
+                </div>
+                <button class="btn-danger delete-btn" aria-label="Delete ${envelope.name}">Delete</button>
+            `;
+
+            // Drag and Drop events
+            card.addEventListener('dragstart', (e) => {
+                dragTarget = index;
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                card.classList.add('drag-over');
+            });
+
+            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+
+            card.addEventListener('drop', (e) => {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+                if (dragTarget !== index) {
+                    [appData.envelopes[dragTarget], appData.envelopes[index]] = [appData.envelopes[index], appData.envelopes[dragTarget]];
+                    saveData();
+                    render(getFilteredEnvelopes());
+                }
+            });
+
+            // Button events
+            card.querySelector('.add-funds-btn').addEventListener('click', (e) => handleAddFunds(e, envelope.id));
+            card.querySelector('.log-spend-btn').addEventListener('click', (e) => handleLogSpend(e, envelope.id));
+            card.querySelector('.transfer-btn').addEventListener('click', (e) => handleTransfer(e, envelope.id));
+            card.querySelector('.edit-btn').addEventListener('click', (e) => handleEdit(e, envelope.id));
+            card.querySelector('.history-btn').addEventListener('click', (e) => handleHistory(e, envelope.id));
+            card.querySelector('.goal-btn').addEventListener('click', (e) => handleGoal(e, envelope.id));
+            card.querySelector('.delete-btn').addEventListener('click', (e) => handleDelete(e, envelope.id));
+
+            return card;
+        }
+
+        function updateSelects() {
+            scheduledEnvelope.innerHTML = '<option value="">Select Jar</option>' + appData.envelopes.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            transferFrom.innerHTML = '<option value="">From Jar</option>' + appData.envelopes.map(e => `<option value="${e.id}">${e.name} (${formatCurrency(e.balance)})</option>`).join('');
+            transferTo.innerHTML = '<option value="">To Jar</option>' + appData.envelopes.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+        }
+
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric' }).format(new Date(date));
+        }
+
+        // --- Modal Management ---
+        function showModal(modal, title = '', description = '') {
+            modal.classList.add('active');
+            if (title) modal.querySelector('h3').textContent = title;
+            if (description) modal.querySelector('p').textContent = description;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideModal(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function showAmountModal(title, description, callback) {
+            showModal(amountModal, title, description);
+            modalAmount.focus();
+            currentAction = (amount, note) => {
+                if (amount > 0) callback(amount, note);
+                hideModal(amountModal);
+            };
+        }
+
+        function showConfirmModal(title, description, callback) {
+            showModal(confirmModal, title, description);
+            confirmYes.onclick = () => {
+                hideModal(confirmModal);
+                callback();
+            };
+        }
+
+        function showHistory(envelopeId) {
+            const envelope = appData.envelopes.find(e => e.id === envelopeId);
+            if (!envelope) return;
+            historyList.innerHTML = envelope.transactions.slice().reverse().map(tx => `
+                <div class="transaction">
+                    <span>${formatDate(tx.date)}: ${tx.note || (tx.type === 'add' ? 'Added' : tx.type === 'spend' ? 'Spent' : 'Transfer')} ${tx.fromName ? `from ${tx.fromName}` : ''}</span>
+                    <span class="amount ${tx.amount < 0 ? 'negative' : ''}">${formatCurrency(tx.amount)}</span>
+                </div>
+            `).join('') || '<p style="text-align: center; color: var(--text-secondary);">No transactions yet.</p>';
+            showModal(historyModal, `${envelope.name} History`);
+        }
+
+        function showEditModal(envelopeId) {
+            const envelope = appData.envelopes.find(e => e.id === envelopeId);
+            if (!envelope) return;
+            editName.value = envelope.name;
+            editGoal.value = envelope.goal || '';
+            showModal(editModal, 'Edit Jar');
+            editSave.onclick = () => {
+                const name = editName.value.trim();
+                const goal = parseFloat(editGoal.value) || 0;
+                if (!name) return alert('Name required');
+                if (appData.envelopes.some(e => e.id !== envelopeId && e.name.toLowerCase() === name.toLowerCase())) return alert('Name exists');
+                envelope.name = name;
+                envelope.goal = goal;
+                saveData();
+                render(getFilteredEnvelopes());
+                updateSelects();
+                hideModal(editModal);
+            };
+        }
+
+        // Setup modal closes
+        function setupModalCloses() {
+            [amountModal, transferModal, confirmModal, historyModal, editModal].forEach(modal => {
+                const closeBtn = modal.querySelector('.modal-close');
+                if (closeBtn) closeBtn.addEventListener('click', () => hideModal(modal));
+                modal.addEventListener('click', e => { if (e.target === modal) hideModal(modal); });
+                const cancels = modal.querySelectorAll('.btn-secondary:not(.btn-primary)');
+                cancels.forEach(c => c.addEventListener('click', () => hideModal(modal)));
+            });
+            modalConfirm.addEventListener('click', () => currentAction(parseFloat(modalAmount.value), modalNote.value.trim()));
+            transferConfirm.addEventListener('click', handleTransferConfirm);
+            historyClose.addEventListener('click', () => hideModal(historyModal));
+            editCancel.addEventListener('click', () => hideModal(editModal));
+        }
+
+        function handleTransferConfirm() {
+            const fromId = parseInt(transferFrom.value);
+            const toId = parseInt(transferTo.value);
+            const amount = parseFloat(transferAmount.value);
+            const note = transferNote.value.trim();
+            if (fromId && toId && fromId !== toId && amount > 0) {
+                const fromEnv = appData.envelopes.find(e => e.id === fromId);
+                const toEnv = appData.envelopes.find(e => e.id === toId);
+                if (amount > fromEnv.balance) return alert('Insufficient funds');
+                fromEnv.balance -= amount;
+                toEnv.balance += amount;
+                addTransaction(fromId, 'transfer', -amount, note, toEnv.name);
+                addTransaction(toId, 'transfer', amount, note, fromEnv.name);
+                saveData();
+                render();
+                hideModal(transferModal);
+                transferAmount.value = '';
+                transferNote.value = '';
+            } else {
+                alert('Invalid transfer details');
+            }
+        }
+
+        // --- Search ---
+        function getFilteredEnvelopes() {
+            const query = searchInput.value.toLowerCase();
+            return appData.envelopes.filter(e => e.name.toLowerCase().includes(query));
+        }
+
+        searchInput.addEventListener('input', () => render(getFilteredEnvelopes()));
+
+        // --- Handlers ---
+        function handleAddIncome() {
+            showAmountModal('Add Income', 'Amount to add to To Be Budgeted:', (amount, note) => {
+                appData.toBeBudgeted += amount;
+                saveData();
+                render();
+            });
+        }
+
+        function handleAddFunds(e, id) {
+            e.stopPropagation();
+            const envelope = appData.envelopes.find(e => e.id === id);
+            showAmountModal(`Add to ${envelope.name}`, `Available in TBB: ${formatCurrency(appData.toBeBudgeted)}`, (amount, note) => {
+                if (amount > appData.toBeBudgeted) return alert('Not enough in TBB');
+                appData.toBeBudgeted -= amount;
+                envelope.balance += amount;
+                addTransaction(id, 'add', amount, note);
+                saveData();
+                render();
+            });
+        }
+
+        function handleLogSpend(e, id) {
+            e.stopPropagation();
+            const envelope = appData.envelopes.find(e => e.id === id);
+            showAmountModal(`Spend from ${envelope.name}`, `Available: ${formatCurrency(envelope.balance)}`, (amount, note) => {
+                if (amount > envelope.balance) return alert('Not enough balance');
+                envelope.balance -= amount;
+                addTransaction(id, 'spend', -amount, note);
+                saveData();
+                render();
+            });
+        }
+
+        function handleTransfer(e, id) {
+            e.stopPropagation();
+            transferFrom.value = id;
+            showModal(transferModal, 'Transfer from Jar');
+        }
+
+        function handleEdit(e, id) {
+            e.stopPropagation();
+            showEditModal(id);
+        }
+
+        function handleHistory(e, id) {
+            e.stopPropagation();
+            showHistory(id);
+        }
+
+        function handleGoal(e, id) {
+            e.stopPropagation();
+            showEditModal(id);
+            editGoal.focus();
+        }
+
+        function handleDelete(e, id) {
+            e.stopPropagation();
+            const envelope = appData.envelopes.find(e => e.id === id);
+            showConfirmModal('Delete Jar?', `Return ${formatCurrency(envelope.balance)} to TBB?`, () => {
+                appData.toBeBudgeted += envelope.balance;
+                appData.envelopes = appData.envelopes.filter(e => e.id !== id);
+                saveData();
+                render();
+                updateSelects();
+            });
+        }
+
+        function addTransaction(id, type, amount, note, fromName = '') {
+            const envelope = appData.envelopes.find(e => e.id === id);
+            if (envelope) {
+                envelope.transactions.unshift({ type, amount, date: Date.now(), note, fromName });
+                if (envelope.transactions.length > 100) envelope.transactions = envelope.transactions.slice(0, 100);
+            }
+        }
+
+        function quickFundGoals() {
+            let totalFunded = 0;
+            appData.envelopes.forEach(envelope => {
+                if (envelope.goal > 0 && envelope.balance < envelope.goal) {
+                    const needed = envelope.goal - envelope.balance;
+                    if (needed <= appData.toBeBudgeted) {
+                        envelope.balance += needed;
+                        appData.toBeBudgeted -= needed;
+                        addTransaction(envelope.id, 'add', needed, 'Quick fund goal');
+                        totalFunded += needed;
+                    }
+                }
+            });
+            if (totalFunded > 0) {
+                saveData();
+                render();
+            } else {
+                alert('No goals to fund or insufficient TBB.');
+            }
+        }
+
+        function renderScheduled() {
+            const today = new Date().toDateString();
+            const due = appData.scheduled.filter(s => !s.applied && new Date(s.date || today) <= new Date(today));
+            scheduledList.innerHTML = due.map(s => {
+                const env = appData.envelopes.find(e => e.id === s.envelopeId);
+                return `
+                    <div class="scheduled-item">
+                        <span>${s.name} - ${formatCurrency(s.amount)} ${env ? `to ${env.name}` : 'to TBB'} ${s.date ? `on ${s.date}` : ''}</span>
+                        <div>
+                            <button class="btn-secondary" onclick="applyScheduled(${s.id})">Apply</button>
+                            <button class="btn-danger" onclick="deleteScheduled(${s.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.applyScheduled = function(id) {
+            const s = appData.scheduled.find(sch => sch.id === id);
+            if (!s) return;
+            const env = appData.envelopes.find(e => e.id === s.envelopeId);
+            if (env) {
+                if (s.amount > env.balance) return alert('Insufficient balance');
+                env.balance -= s.amount;
+                addTransaction(s.envelopeId, 'spend', -s.amount, `Scheduled: ${s.name}`);
+            } else {
+                appData.toBeBudgeted -= s.amount;
+            }
+            s.applied = true;
+            saveData();
+            render();
+            renderScheduled();
+        };
+
+        window.deleteScheduled = function(id) {
+            if (confirm('Delete scheduled transaction?')) {
+                appData.scheduled = appData.scheduled.filter(s => s.id !== id);
+                saveData();
+                renderScheduled();
+            }
+        };
+
+        function handleAddScheduled(e) {
+            e.preventDefault();
+            const name = scheduledName.value.trim();
+            const amount = parseFloat(scheduledAmount.value);
+            const envelopeId = parseInt(scheduledEnvelope.value);
+            const date = scheduledDate.value;
+            if (name && amount > 0) {
+                appData.scheduled.push({ id: Date.now(), name, amount, envelopeId: envelopeId || null, date, applied: false });
+                e.target.reset();
+                saveData();
+                renderScheduled();
+            }
+        }
+
+        function renderReport() {
+            let totalIncome = appData.toBeBudgeted;
+            let totalSpent = 0;
+            appData.envelopes.forEach(e => {
+                totalIncome += e.balance;
+                totalSpent += e.transactions.filter(t => t.type === 'spend').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            });
+            reportContent.innerHTML = `
+                <div class="report-item"><span>Total Allocated:</span><span>${formatCurrency(totalIncome)}</span></div>
+                <div class="report-item"><span>Total Spent:</span><span>${formatCurrency(totalSpent)}</span></div>
+                <div class="report-item"><span>Remaining:</span><span>${formatCurrency(totalIncome - totalSpent)}</span></div>
+            `;
+        }
+
+        // Event Listeners
+        addIncomeBtn.addEventListener('click', handleAddIncome);
+        transferBtn.addEventListener('click', () => showModal(transferModal, 'Transfer Between Jars'));
+        addEnvelopeForm.addEventListener('submit', handleAddEnvelope);
+        addScheduledForm.addEventListener('submit', handleAddScheduled);
+        exportBtn.addEventListener('click', exportData);
+        importFile.addEventListener('change', importData);
+        lockBtn.addEventListener('click', () => {
+            if (!appData.pin) {
+                const pin = prompt('Set 4-digit PIN:');
+                if (setPin(pin)) return;
+            }
+            appData.locked = true;
+            saveData();
+            showPinLock();
+        });
+        pinSubmit.addEventListener('click', () => checkPin(pinInput.value));
+        pinInput.addEventListener('keypress', e => { if (e.key === 'Enter') checkPin(pinInput.value); });
+        quickFundBtn.addEventListener('click', quickFundGoals);
+        themeToggle.addEventListener('click', () => {
+            const theme = document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', theme);
+        });
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.dataset.theme = savedTheme;
+        themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+        function handleAddEnvelope(e) {
+            e.preventDefault();
+            const name = newEnvelopeNameEl.value.trim();
+            if (name && !appData.envelopes.some(en => en.name.toLowerCase() === name.toLowerCase())) {
+                appData.envelopes.push({
+                    id: Date.now(),
+                    name,
+                    balance: 0,
+                    goal: 0,
+                    transactions: []
+                });
+                newEnvelopeNameEl.value = '';
+                saveData();
+                render();
+            } else {
+                alert('Invalid or duplicate name');
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupModalCloses();
+            render();
+            renderScheduled();
+            renderReport();
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
